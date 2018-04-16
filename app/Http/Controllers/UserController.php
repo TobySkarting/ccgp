@@ -6,19 +6,25 @@ use Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class UserController extends Controller
 {
-    public function getCorn()
+    public function __construct()
+    {
+        $this->middleware('guest');
+    }
+
+    public function getRegister()
     {
         return view('corn');
     }
 
-    public function addCorn(Request $request)
+    public function addRegister(Request $request)
     {
         if (!$request->hasFile('data'))
             throw ValidationException::withMessages([
-                'data' => 'no data',
+                'images' => 'no data',
             ]);
         
         $filename = $request->file('data')->store("register");
@@ -56,5 +62,74 @@ class UserController extends Controller
         $request->session()->put('key', $key);
 
         return redirect('/corn')->with('status', 'Registered!');
+    }
+
+    function getLogin()
+    {
+        return view('more');
+    }
+
+    function addLogin(Request $request)
+    {
+        if (!$request->hasFile('data'))
+            throw ValidationException::withMessages([
+                'images' => 'no data',
+            ]);
+        
+        $filename = $request->file('data')->store("login");
+        $request->session()->push('login', $filename);
+        return $request->session()->all();
+    }
+
+    function login(Request $request)
+    {
+        $request->validate([
+            'name' => 'required'
+        ]);
+
+        $username = $request->input('name');
+        if (!Storage::exists("registered/$username"))
+            throw ValidationException::withMessages([
+                'name' => 'This is not a registered username.',
+            ]);
+        
+        $images = $request->session()->get('login');
+        if (is_null($images) || count($images) === 0)
+            throw ValidationException::withMessages([
+                'images' => "You haven't uploaded any images.",
+            ]);
+
+        $key = Storage::get("registered/$username/key");
+
+        $i = 0;
+        foreach ($images as $image) {
+            $correct = "registered/$username/$i.jpg";
+            if (!Storage::exists($correct))
+                throw ValidationException::withMessages([
+                    'images' => "Wrong password.",
+                ]);
+            // Extract
+
+            // Decrypt
+
+            // Compare
+
+            ++$i;
+        }
+        if (Storage::exists("registered/$username/$i.jpg"))
+            throw ValidationException::withMessages([
+                'images' => "Wrong password.",
+            ]);
+
+        $request->session()->forget('login');
+        
+        return redirect('/dashboard')->with('status', 'Logged in!');
+    }
+
+    function toby()
+    {
+        $img = Image::make('../storage/app/idarling.jpeg');
+
+        return $img->height();
     }
 }
