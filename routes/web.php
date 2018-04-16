@@ -15,18 +15,20 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes();
+// Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
-Route::get('/corn', 'UserController@getRegister');
-Route::post('/corn/add', 'UserController@addRegister');
-Route::post('/corn/register', 'UserController@register');
-Route::get('/corn/register', 'UserController@register');
+Route::prefix('register')->group(function () {
+    Route::get('/', 'UserController@getRegister')->name('register');
+    Route::post('/add', 'UserController@addRegister');
+    Route::post('/', 'UserController@register');
+});
 
-Route::get('/more', 'UserController@getLogin');
-Route::post('/more/add', 'UserController@addLogin');
-Route::post('/more/login', 'UserController@login');
-Route::get('/more/login', 'UserController@login');
+Route::prefix('login')->group(function () {
+    Route::get('/', 'UserController@getLogin')->name('login');
+    Route::post('/add', 'UserController@addLogin');
+    Route::post('/', 'UserController@login');
+});
 
 Route::get('/toby', 'UserController@toby');

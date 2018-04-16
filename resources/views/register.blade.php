@@ -5,13 +5,21 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">Login</div>
+                <div class="card-header">Register</div>
 
                 <div class="card-body">
                     @if (session('status'))
                         <div class="alert alert-success">
                             {{ session('status') }}
                         </div>
+                        @if (session('key'))
+                            <script>
+                                localStorage.setItem("key", "{{ session('key') }}");
+                            </script>
+                        @endif
+                        <script>
+                            localStorage.setItem("status", "{{ session('status') }}");
+                        </script>
                     @endif
 
                     <div class="form-group row">
@@ -33,7 +41,7 @@
                         </div>
                     </div>
 
-                    <form method="POST" action="more/login">
+                    <form method="POST" action="{{ route('register') }}">
                         @csrf
 
                         <div class="form-group row">
@@ -53,7 +61,7 @@
                         <div class="form-group row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    Login
+                                    Register
                                 </button>
                             </div>
                         </div>
@@ -92,7 +100,7 @@ $(function ($) {
             'csrfToken': "{{ csrf_token() }}",
             'workspace': $('#uploaded')[0],
             /* Add rand parameter to prevent accidental caching of the image by the server */
-            'uploadUrl': 'more/add?id=' + id + '&action=register&rand=' + new Date().getTime(),
+            'uploadUrl': 'register/add?id=' + id + '&action=register&rand=' + new Date().getTime(),
             'debug': true
         });
     });

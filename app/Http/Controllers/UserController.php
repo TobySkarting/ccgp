@@ -17,7 +17,7 @@ class UserController extends Controller
 
     public function getRegister()
     {
-        return view('corn');
+        return view('register');
     }
 
     public function addRegister(Request $request)
@@ -61,12 +61,13 @@ class UserController extends Controller
         Storage::put("registered/$username/key", $key);
         $request->session()->put('key', $key);
 
-        return redirect('/corn')->with('status', 'Registered!');
+        return redirect(route('register'))->with('status', 'Registered!');
     }
 
-    function getLogin()
+    function getLogin(Request $request)
     {
-        return view('more');
+        $request->session()->forget('login');
+        return view('login');
     }
 
     function addLogin(Request $request)
@@ -123,7 +124,7 @@ class UserController extends Controller
 
         $request->session()->forget('login');
         
-        return redirect('/dashboard')->with('status', 'Logged in!');
+        return redirect('/home')->with('status', 'Logged in!');
     }
 
     function toby()
