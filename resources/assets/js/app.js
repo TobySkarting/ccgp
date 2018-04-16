@@ -20,3 +20,10 @@ Vue.component('example-component', require('./components/ExampleComponent.vue'))
 const app = new Vue({
     el: '#app'
 });
+
+const AES = require("crypto-js/aes");
+window.CryptoJS = {};
+window.CryptoJS.AES = AES;
+
+const EXIF = require('exif-js');
+window.EXIF = EXIF;

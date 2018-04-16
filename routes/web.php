@@ -18,3 +18,7 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/corn', 'UserController@getCorn');
+Route::post('/corn/add', 'UserController@addCorn');
+Route::post('/corn/register', 'UserController@register');
+Route::get('/corn/register', 'UserController@register');
