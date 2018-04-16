@@ -31,4 +31,6 @@ Route::prefix('login')->group(function () {
     Route::post('/', 'UserController@login');
 });
 
+Route::post('/logout', 'UserController@logout')->name('logout');
+
 Route::get('/toby', 'UserController@toby');

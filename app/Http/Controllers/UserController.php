@@ -3,20 +3,22 @@
 namespace App\Http\Controllers;
 
 use Storage;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Intervention\Image\ImageManagerStatic as Image;
 
 class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('guest');
+        $this->middleware('guest')->except('logout');
     }
 
-    public function getRegister()
+    public function getRegister(Request $request)
     {
+        $request->session()->forget('new');
         return view('register');
     }
 
@@ -35,7 +37,7 @@ class UserController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required'
+            'name' => 'required|unique:users'
         ]);
 
         $username = $request->input('name');
@@ -60,6 +62,11 @@ class UserController extends Controller
         $key = Str::random();
         Storage::put("registered/$username/key", $key);
         $request->session()->put('key', $key);
+
+        User::create([
+            'name' => $username,
+            'key' => $key,
+        ]);
 
         return redirect(route('register'))->with('status', 'Registered!');
     }
@@ -114,6 +121,10 @@ class UserController extends Controller
             // Decrypt
 
             // Compare
+            if (!$this->compareImages("../storage/app/" . $correct, "../storage/app/" . $image))
+                throw ValidationException::withMessages([
+                    'images' => "Wrong password.",
+                ]);
 
             ++$i;
         }
@@ -123,14 +134,60 @@ class UserController extends Controller
             ]);
 
         $request->session()->forget('login');
-        
+
+        Auth::login(User::where('name', $username)->first());
+
         return redirect('/home')->with('status', 'Logged in!');
+    }
+
+    public function logout(Request $request)
+    {
+        $request->session()->invalidate();
+
+        return redirect('/');
     }
 
     function toby()
     {
-        $img = Image::make('../storage/app/idarling.jpeg');
+        return $this->compareImages('../storage/app/idarling.jpeg', '../storage/app/idarling.jpeg') ? "Y" : "N";
+    }
 
-        return $img->height();
+    public static function compareImages($imagePathA, $imagePathB)
+    {
+        $imgA = imagecreatefromjpeg($imagePathA);
+        $widthA = imagesx($imgA);
+        $heightA = imagesy($imgA);
+
+        $imgB = imagecreatefromjpeg($imagePathB);
+        $widthB = imagesx($imgB);
+        $heightB = imagesy($imgB);
+
+        if ($widthA != $widthB || $heightA != $heightB)
+            return false;
+
+        $matchedCount = 0;
+        for ($y = 0; $y < $heightA; $y++) {
+            for ($x = 0; $x < $widthA; $x++) {
+
+                $rgbA = imagecolorat($imgA, $x, $y);
+                $colorsA = imagecolorsforindex($imgA, $rgbA);
+
+                $rgbB = imagecolorat($imgB, $x, $y);
+                $colorsB = imagecolorsforindex($imgB, $rgbB);
+
+                if (self::colorComp($colorsA['red'], $colorsB['red'])
+                        && self::colorComp($colorsA['green'], $colorsB['green'])
+                        && self::colorComp($colorsA['blue'], $colorsB['blue']))
+                    ++$matchedCount;
+                else
+                    return false;
+            }
+        }
+        return ($matchedCount <> 0);
+    }
+
+    public static function colorComp($base, $masked)
+    {
+        return (!$masked || $base == $masked);
     }
 }
