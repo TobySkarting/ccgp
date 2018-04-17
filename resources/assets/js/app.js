@@ -21,9 +21,8 @@ const app = new Vue({
     el: '#app'
 });
 
-const AES = require("crypto-js/aes");
-window.CryptoJS = {};
-window.CryptoJS.AES = AES;
+const CryptoJS = require("crypto-js");
+window.CryptoJS = CryptoJS;
 
 const EXIF = require('exif-js');
 window.EXIF = EXIF;

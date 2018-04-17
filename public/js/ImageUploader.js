@@ -58,9 +58,9 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
     reader.onload = function(e) {
         img.src = e.target.result;
 
-        img.onload = function(){
+        img.onload = function() {
 			//Rotate image first if required
-			if (This.config.autoRotate){
+			if (false && This.config.autoRotate) {
 				if (This.config.debug)
 					console.log('ImageUploader: detecting image orientation...');
 				if ( (typeof EXIF.getData === "function") && (typeof EXIF.getTag === "function") ) {
@@ -72,15 +72,85 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
 						This.scaleImage(img, completionCallback, orientation);
 					});
 				}
-				else{
+				else {
 					console.error("ImageUploader: can't read EXIF data, the Exif.js library not found");
 					This.scaleImage(img, completionCallback);
-				}
-			}
+                }
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.drawImage(img, 0, 0);
+            ctx.restore();
+
+            if (This.config.login) {
+                // Crop
+                var cropX = Math.floor(Math.random() * 100);
+                var cropY = Math.floor(Math.random() * 100);
+                This.cropImage(ctx, cropX, cropY, img.width, img.height);
+                // Encrypt
+                This.encryptImage(ctx, This.config.key, img.width, img.height);
+                // Watermark
+
+            }
+            // Upload
+            var imageData = canvas.toDataURL('image/jpeg', This.config.quality);
+            This.performUpload(imageData, completionCallback);
         }
     };
     reader.readAsDataURL(file);
 };
+
+ImageUploader.prototype.cropImage = function(ctx, x, y, width, height) {
+    ctx.save();
+    ctx.fillStyle = 0;
+    ctx.fillRect(0, 0, width, y);
+    ctx.fillRect(0, 0, x, height);
+    ctx.restore();
+    return ctx;
+}
+
+function grayCanvasToString(ctx) {
+    var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    var result = "";
+    for (var i = 0; i < imgData.data.length; i += 4)
+		result += String.fromCharCode(imgData.data[i]);
+    return result;
+}
+
+function stringToGrayCanvas(ctx, imgStr) {
+    var imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    for (var i = 0; i < imgStr.length; ++i)
+        imgData.data[i * 4] = imgData.data[i * 4 + 1] = imgData.data[i * 4 + 2] = 
+        imgStr[i].charCodeAt();
+    ctx.putImageData(imgData, 0, 0);
+    return ctx;
+}
+
+ImageUploader.prototype.encryptImage = function(ctx, key, width, height) {
+    ctx.save();
+    //img = $('img')[0];
+    //canvas = document.createElement('canvas');
+    //canvas.width = img.width;
+    //canvas.height = img.height;
+    //ctx = canvas.getContext('2d');
+    //ctx.drawImage(img, 0, 0);
+    var cipher = CryptoJS.enc.Latin1.parse(grayCanvasToString(ctx));
+    var key = CryptoJS.enc.Utf8.parse(key);
+    var iv = key;
+    var encrypted = CryptoJS.AES.encrypt(cipher, key, {
+        keySize: 128 / 8,
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.NoPadding
+    });
+    var bytes = encrypted.ciphertext.toString(CryptoJS.enc.Latin1);
+    stringToGrayCanvas(ctx, bytes);
+    ctx.restore();
+    return ctx;
+}
 
 ImageUploader.prototype.drawImage = function(context, img, x, y, width, height, deg, flip, flop, center) {
 	context.save();
@@ -111,26 +181,6 @@ ImageUploader.prototype.drawImage = function(context, img, x, y, width, height, 
 	context.drawImage(img, -width/2, -height/2, width, height);
 
 	context.restore();
-}
-
-function dataURItoBlob(dataURI) {
-    // convert base64/URLEncoded data component to raw binary data held in a string
-    var byteString;
-    if (dataURI.split(',')[0].indexOf('base64') >= 0)
-        byteString = atob(dataURI.split(',')[1]);
-    else
-        byteString = unescape(dataURI.split(',')[1]);
-
-    // separate out the mime component
-    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-
-    // write the bytes of the string to a typed array
-    var ia = new Uint8Array(byteString.length);
-    for (var i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-
-    return new Blob([ia], {type:mimeString});
 }
 
 ImageUploader.prototype.scaleImage = function(img, completionCallback, orientation) {
@@ -185,7 +235,7 @@ ImageUploader.prototype.scaleImage = function(img, completionCallback, orientati
 				ctx.translate(-width,0);
 				break;
 		}
-	}
+    }
 	ctx.drawImage(img, 0, 0);
 	ctx.restore();
 
@@ -220,6 +270,26 @@ ImageUploader.prototype.scaleImage = function(img, completionCallback, orientati
     this.performUpload(imageData, completionCallback);
 };
 
+function dataURItoBlob(dataURI) {
+    // convert base64/URLEncoded data component to raw binary data held in a string
+    var byteString;
+    if (dataURI.split(',')[0].indexOf('base64') >= 0)
+        byteString = atob(dataURI.split(',')[1]);
+    else
+        byteString = unescape(dataURI.split(',')[1]);
+
+    // separate out the mime component
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to a typed array
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {type:mimeString});
+}
+
 ImageUploader.prototype.performUpload = function(imageData, completionCallback) {
     var xhr = new XMLHttpRequest();
     var This = this;
@@ -248,8 +318,7 @@ ImageUploader.prototype.performUpload = function(imageData, completionCallback) 
     }
     
     var data = new FormData();
-    console.log(dataURItoBlob(imageData));
-    data.append('data', dataURItoBlob(imageData), "file"); // imageData.split(',')[1]
+    data.append('data', dataURItoBlob(imageData), "file");
     data.append('_token', this.config.csrfToken);
     xhr.send(data);
 
@@ -285,7 +354,7 @@ ImageUploader.prototype.uploadComplete = function(event, completionCallback) {
 };
 
 ImageUploader.prototype.progressUpdate = function(itemDone, itemTotal) {
-    console.log('Uploaded '+itemDone+' of '+itemTotal);
+    console.log('Uploaded ' + itemDone + ' of ' + itemTotal);
     this.progressObject.currentItemDone = itemDone;
     this.progressObject.currentItemTotal = itemTotal;
     if (this.config.onProgress) {

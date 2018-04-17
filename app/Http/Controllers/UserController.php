@@ -117,9 +117,17 @@ class UserController extends Controller
                     'images' => "Wrong password.",
                 ]);
             // Extract
-
+            $grayPixels = self::getGrayPixels("../storage/app/" . $image);
             // Decrypt
-
+            $decrypted = openssl_decrypt($grayPixels, 'aes-128-cbc', $key, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $key);
+            if ($decrypted === false)
+                throw ValidationException::withMessages([
+                    'images' => "Wrong key.",
+                ]);
+            
+            //Storage::put("decrypted", $decrypted);
+            self::grayPixelsToFile($decrypted, "../storage/app/" . $image);
+            dd($image);
             // Compare
             if (!$this->compareImages("../storage/app/" . $correct, "../storage/app/" . $image))
                 throw ValidationException::withMessages([
@@ -150,6 +158,44 @@ class UserController extends Controller
     function toby()
     {
         return $this->compareImages('../storage/app/idarling.jpeg', '../storage/app/idarling.jpeg') ? "Y" : "N";
+    }
+
+    public static function grayPixelsToFile($pixels, $imagePath)
+    {
+        $img = imagecreatefromjpeg($imagePath);
+        $width = imagesx($img);
+        $height = imagesy($img);
+
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $r = ord($pixels[$y * $width + $x]);
+                $new_color = imagecolorallocate($img, $r, $r, $r);
+                imagesetpixel($img, $x, $y, $new_color);
+            }
+        }
+        header('Content-Type: image/jpeg');
+        imagejpeg($img);
+
+        imagedestroy($img);
+
+        exit();
+    }
+
+    public static function getGrayPixels($imagePath)
+    {
+        $img = imagecreatefromjpeg($imagePath);
+        $width = imagesx($img);
+        $height = imagesy($img);
+
+        $result = "";
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $rgb = imagecolorat($img, $x, $y);
+                $colors = imagecolorsforindex($img, $rgb);
+                $result .= sprintf('%c', $colors['red']);
+            }
+        }
+        return $result;
     }
 
     public static function compareImages($imagePathA, $imagePathB)
