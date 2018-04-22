@@ -50,6 +50,22 @@ ImageUploader.prototype.handleFileList = function(fileArray) {
     }
 };
 
+ImageUploader.prototype.hideImage = function(passwordCtx, coverCtx) {
+    var passwordImageData = passwordCtx.getImageData(0, 0, passwordCtx.canvas.width, passwordCtx.canvas.height);
+    var coverImageData = coverCtx.getImageData(0, 0, coverCtx.canvas.width, coverCtx.canvas.height);
+    for (var i = 0; i < coverImageData.data.length; i += 4) {
+        var byte = passwordImageData.data[i];
+        var r = byte >> 5 & 0x7;
+        var g = byte >> 3 & 0x3;
+        var b = byte & 0x7;
+        coverImageData.data[i] = (coverImageData.data[i] & ~0x7) | r;
+        coverImageData.data[i + 1] = (coverImageData.data[i + 1] & ~0x3) | g;
+        coverImageData.data[i + 2] = (coverImageData.data[i + 2] & ~0x7) | b;
+        coverImageData.data[i + 3] = 255;
+    }
+    coverCtx.putImageData(coverImageData, 0, 0);
+}
+
 ImageUploader.prototype.handleFileSelection = function(file, completionCallback) {
     var img = document.createElement('img');
     this.currentFile = file;
@@ -93,11 +109,26 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
                 // Encrypt
                 This.encryptImage(ctx, This.config.key, img.width, img.height);
                 // Watermark
-
+                var coverImage = document.createElement('img');
+                coverImage.onload = function() {
+                    var coverCanvas = document.createElement('canvas');
+                    coverCanvas.width = img.width;
+                    coverCanvas.height = img.height;
+                    var coverCtx = coverCanvas.getContext('2d');
+                    coverCtx.save();
+                    coverCtx.drawImage(coverImage, 0, 0);
+                    coverCtx.restore();
+                    This.hideImage(ctx, coverCtx);
+                    // Upload
+                    var imageData = coverCanvas.toDataURL('image/png');
+                    This.performUpload(imageData, completionCallback);
+                }
+                coverImage.src = "/login/cover";
+            } else {
+                // Upload
+                var imageData = canvas.toDataURL('image/png');
+                This.performUpload(imageData, completionCallback);
             }
-            // Upload
-            var imageData = canvas.toDataURL('image/jpeg', This.config.quality);
-            This.performUpload(imageData, completionCallback);
         }
     };
     reader.readAsDataURL(file);

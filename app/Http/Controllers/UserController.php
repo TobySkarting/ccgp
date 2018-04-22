@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use File;
 use Storage;
 use App\User;
 use Illuminate\Http\Request;
@@ -155,6 +156,16 @@ class UserController extends Controller
         return redirect('/');
     }
 
+    function getCover() 
+    {
+        $files = File::glob("../storage/app/color/*.jpg");
+        $count = count($files);
+        $img = imagecreatefromjpeg($files[rand() % $count]);
+        header('Content-Type: image/png');
+        imagepng($img);
+        imagedestroy($img);
+    }
+
     function toby()
     {
         return $this->compareImages('../storage/app/idarling.jpeg', '../storage/app/idarling.jpeg') ? "Y" : "N";
@@ -162,7 +173,7 @@ class UserController extends Controller
 
     public static function grayPixelsToFile($pixels, $imagePath)
     {
-        $img = imagecreatefromjpeg($imagePath);
+        $img = imagecreatefrompng($imagePath);
         $width = imagesx($img);
         $height = imagesy($img);
 
@@ -173,8 +184,8 @@ class UserController extends Controller
                 imagesetpixel($img, $x, $y, $new_color);
             }
         }
-        header('Content-Type: image/jpeg');
-        imagejpeg($img);
+        header('Content-Type: image/png');
+        imagepng($img);
 
         imagedestroy($img);
 
@@ -183,7 +194,7 @@ class UserController extends Controller
 
     public static function getGrayPixels($imagePath)
     {
-        $img = imagecreatefromjpeg($imagePath);
+        $img = imagecreatefrompng($imagePath);
         $width = imagesx($img);
         $height = imagesy($img);
 

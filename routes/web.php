@@ -26,6 +26,7 @@ Route::prefix('register')->group(function () {
 });
 
 Route::prefix('login')->group(function () {
+    Route::get('/cover', 'UserController@getCover')->name('cover');
     Route::get('/', 'UserController@getLogin')->name('login');
     Route::post('/add', 'UserController@addLogin');
     Route::post('/', 'UserController@login');
