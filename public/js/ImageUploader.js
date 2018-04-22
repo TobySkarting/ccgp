@@ -123,7 +123,7 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
                     var imageData = coverCanvas.toDataURL('image/png');
                     This.performUpload(imageData, completionCallback);
                 }
-                coverImage.src = "/login/cover";
+                coverImage.src = '/login/cover&rand=' + new Date().getTime();
             } else {
                 // Upload
                 var imageData = canvas.toDataURL('image/png');
