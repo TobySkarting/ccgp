@@ -55,7 +55,7 @@ class UserController extends Controller
 
         $i = 0;
         foreach ($images as $image) {
-            Storage::move($image, "registered/$username/$i.jpg");
+            Storage::move($image, "registered/$username/$i.png");
             ++$i;
         }
 
@@ -111,33 +111,34 @@ class UserController extends Controller
         $key = Storage::get("registered/$username/key");
 
         $i = 0;
-        foreach ($images as $image) {
-            $correct = "registered/$username/$i.jpg";
-            if (!Storage::exists($correct))
+        foreach ($images as $imagePath) {
+            $correctImgPath = "registered/$username/$i.png";
+            if (!Storage::exists($correctImgPath))
                 throw ValidationException::withMessages([
                     'images' => "Wrong password.",
                 ]);
             // Extract
-            $grayPixels = self::getGrayPixels("../storage/app/" . $image);
+            $receivedImg = imagecreatefrompng("../storage/app/" . $imagePath);
+            $grayPixels = self::getGrayPixels($receivedImg);
+
             // Decrypt
             $decrypted = openssl_decrypt($grayPixels, 'aes-128-cbc', $key, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $key);
             if ($decrypted === false)
                 throw ValidationException::withMessages([
                     'images' => "Wrong key.",
                 ]);
-            
-            //Storage::put("decrypted", $decrypted);
-            self::grayPixelsToFile($decrypted, "../storage/app/" . $image);
-            dd($image);
-            // Compare
-            if (!$this->compareImages("../storage/app/" . $correct, "../storage/app/" . $image))
+            $correctImg = imagecreatefrompng("../storage/app/" . $correctImgPath);
+            $decryptedImg = self::pixelsToImage($decrypted, imagesx($correctImg), imagesy($correctImg));
+
+            // Compare            
+            if (!$this->compareImages($correctImg, $decryptedImg))
                 throw ValidationException::withMessages([
                     'images' => "Wrong password.",
                 ]);
 
             ++$i;
         }
-        if (Storage::exists("registered/$username/$i.jpg"))
+        if (Storage::exists("registered/$username/$i.png"))
             throw ValidationException::withMessages([
                 'images' => "Wrong password.",
             ]);
@@ -166,35 +167,21 @@ class UserController extends Controller
         imagedestroy($img);
     }
 
-    function toby()
+    public static function pixelsToImage($pixels, $width, $height)
     {
-        return $this->compareImages('../storage/app/idarling.jpeg', '../storage/app/idarling.jpeg') ? "Y" : "N";
-    }
-
-    public static function grayPixelsToFile($pixels, $imagePath)
-    {
-        $img = imagecreatefrompng($imagePath);
-        $width = imagesx($img);
-        $height = imagesy($img);
-
+        $img = imagecreatetruecolor($width, $height);
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x++) {
                 $r = ord($pixels[$y * $width + $x]);
-                $new_color = imagecolorallocate($img, $r, $r, $r);
-                imagesetpixel($img, $x, $y, $new_color);
+                $color = imagecolorallocate($img, $r, $r, $r);
+                imagesetpixel($img, $x, $y, $color);
             }
         }
-        header('Content-Type: image/png');
-        imagepng($img);
-
-        imagedestroy($img);
-
-        exit();
+        return $img;
     }
 
-    public static function getGrayPixels($imagePath)
+    public static function getGrayPixels($img)
     {
-        $img = imagecreatefrompng($imagePath);
         $width = imagesx($img);
         $height = imagesy($img);
 
@@ -203,19 +190,27 @@ class UserController extends Controller
             for ($x = 0; $x < $width; $x++) {
                 $rgb = imagecolorat($img, $x, $y);
                 $colors = imagecolorsforindex($img, $rgb);
-                $result .= sprintf('%c', $colors['red']);
+                $r = $colors['red'];
+                $g = $colors['green'];
+                $b = $colors['blue'];
+                $result .= sprintf('%c', ($r & 0x7) << 5 | ($g & 0x3) << 3 | ($b & 0x7));
             }
         }
         return $result;
     }
 
-    public static function compareImages($imagePathA, $imagePathB)
+    public static function compareImageFiles($imagePathA, $imagePathB)
     {
-        $imgA = imagecreatefromjpeg($imagePathA);
+        $imgA = imagecreatefrompng($imagePathA);
+        $imgB = imagecreatefrompng($imagePathB);
+        return self::compareImages($imgA, $imgB);
+    }
+
+    public static function compareImages($imgA, $imgB)
+    {
         $widthA = imagesx($imgA);
         $heightA = imagesy($imgA);
 
-        $imgB = imagecreatefromjpeg($imagePathB);
         $widthB = imagesx($imgB);
         $heightB = imagesy($imgB);
 
@@ -225,26 +220,16 @@ class UserController extends Controller
         $matchedCount = 0;
         for ($y = 0; $y < $heightA; $y++) {
             for ($x = 0; $x < $widthA; $x++) {
-
                 $rgbA = imagecolorat($imgA, $x, $y);
-                $colorsA = imagecolorsforindex($imgA, $rgbA);
-
                 $rgbB = imagecolorat($imgB, $x, $y);
-                $colorsB = imagecolorsforindex($imgB, $rgbB);
-
-                if (self::colorComp($colorsA['red'], $colorsB['red'])
-                        && self::colorComp($colorsA['green'], $colorsB['green'])
-                        && self::colorComp($colorsA['blue'], $colorsB['blue']))
+                if ($rgbB == 0)
+                    continue;
+                if ($rgbA == $rgbB)
                     ++$matchedCount;
                 else
                     return false;
             }
         }
-        return ($matchedCount <> 0);
-    }
-
-    public static function colorComp($base, $masked)
-    {
-        return (!$masked || $base == $masked);
+        return ($matchedCount > 0);
     }
 }
