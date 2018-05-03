@@ -17,19 +17,27 @@
                     You are logged in!
 
                     @if (session('pics'))
-                        <div id="uploaded">
-                            <div class="row">
-                                <div class="col-md-4 text-center">Original</div>
-                                <div class="col-md-4 text-center">Cropped</div>
-                                <div class="col-md-4 text-center">Hided</div>
+                        <div class="form-group">
+                            <div id="uploaded" class="offset-md-1 col-md-10">
+                                    <div class="row">
+                                        <div class="col-md-4 text-center">Received</div>
+                                        <div class="col-md-4 text-center">Decrypted</div>
+                                        <div class="col-md-4 text-center">Matched</div>
+                                    </div>
+                                    @foreach (session('pics') as $pic)
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <img class="img-fluid img-thumbnail" src="{{ $pic[0] }}">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <img class="img-fluid img-thumbnail" src="{{ $pic[1] }}">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <img class="img-fluid img-thumbnail" src="{{ $pic[2] }}">
+                                            </div>
+                                        </div>
+                                    @endforeach
                             </div>
-                            @foreach (session('pics') as $pic)
-                                <div class="row">
-                                    <div class="col-md-4 text-center">$pic[0]</div>
-                                    <div class="col-md-4 text-center">$pic[1]</div>
-                                    <div class="col-md-4 text-center">$pic[2]</div>
-                                </div>
-                            @endforeach
                         </div>
                     @endif
                 </div>

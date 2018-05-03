@@ -110,17 +110,26 @@ class UserController extends Controller
 
         $key = Storage::get("registered/$username/key");
 
-        $i = 0;
         $pics = array();
+        $failed = false;
+        $i = 0;
         foreach ($images as $imagePath) {
             $pic = array();
             $correctImgPath = "registered/$username/$i.png";
-            if (!Storage::exists($correctImgPath))
-                throw ValidationException::withMessages([
-                    'images' => "Wrong password.",
-                ]);
+            ++$i;
+            if (!Storage::exists($correctImgPath)) {
+                $failed = true;
+                array_push($pics, $pic);
+                continue;
+            }
+            $correctImg = imagecreatefrompng(Storage::path($correctImgPath));
+                
             // Extract
             $receivedImg = imagecreatefrompng(Storage::path($imagePath));
+            $type = pathinfo(Storage::path($imagePath), PATHINFO_EXTENSION);
+            $image_data = Storage::get($imagePath);
+            $pic[0] = 'data:image/' . $type . ';base64,' . base64_encode($image_data);
+
             $grayPixels = self::getGrayPixels($receivedImg);
 
             // Decrypt
@@ -129,27 +138,44 @@ class UserController extends Controller
                 throw ValidationException::withMessages([
                     'images' => "Wrong key.",
                 ]);
-            $correctImg = imagecreatefrompng(Storage::path($correctImgPath));
-            $decryptedImg = self::pixelsToImage($decrypted, imagesx($correctImg), imagesy($correctImg));
+            $decryptedImg = self::pixelsToImage($decrypted, imagesx($receivedImg), imagesy($receivedImg));
+            ob_start();
+            imagepng($decryptedImg);
+            $image_data = ob_get_contents();
+            ob_end_clean();
+            $pic[1] = 'data:image/png;base64,' . base64_encode($image_data);
 
             // Compare            
-            if (!$this->compareImages($correctImg, $decryptedImg))
-                throw ValidationException::withMessages([
-                    'images' => "Wrong password.",
-                ]);
+            if (!$this->compareImages($correctImg, $decryptedImg)) {
+                $failed = true;
+                array_push($pics, $pic);
+                continue;
+            }
 
-            ++$i;
+            ob_start();
+            imagepng($correctImg);
+            $image_data = ob_get_contents();
+            ob_end_clean();
+            $pic[2] = 'data:image/png;base64,' . base64_encode($image_data);
+
+            array_push($pics, $pic);
         }
-        if (Storage::exists("registered/$username/$i.png"))
+        if (Storage::exists("registered/$username/$i.png")) {
+            $failed = true;
+        }
+
+        if ($failed) {
+            $request->session()->flash('pics', $pics);
+            //return redirect('/login')->with(['status' => 'FAILED!', 'pics' => $pics]);
             throw ValidationException::withMessages([
                 'images' => "Wrong password.",
             ]);
-
+        }
         $request->session()->forget('login');
 
         Auth::login(User::where('name', $username)->first());
 
-        return redirect('/home')->with('status', 'Logged in!');
+        return redirect('/home')->with(['status' => 'Logged in!', 'pics' => $pics]);
     }
 
     public function logout(Request $request)

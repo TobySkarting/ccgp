@@ -103,11 +103,10 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
             
             var row = document.createElement("div");
             row.className = "row";
-            //This.config.workspace.appendChild(document.createElement('br'));
             This.config.workspace.appendChild(row);
 
             var col1 = document.createElement("div");
-            col1.className = "col-md-4";
+            col1.className = "col-md-3 col-xs-3";
             var orgImage = document.createElement('img');
             orgImage.src = canvas.toDataURL('image/png');
             orgImage.className = "img-fluid img-thumbnail";
@@ -125,7 +124,7 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
                 This.cropImage(ctx, cropX, cropY, img.width, img.height);
 
                 var col2 = document.createElement("div");
-                col2.className = "col-md-4 col-xs-4";
+                col2.className = "col-md-3 col-xs-3";
                 var croppedImage = document.createElement('img');
                 croppedImage.src = canvas.toDataURL('image/png');
                 croppedImage.className = "img-fluid img-thumbnail";
@@ -138,6 +137,18 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
 
                 // Encrypt
                 This.encryptImage(ctx, This.config.key, img.width, img.height);
+                var col3 = document.createElement("div");
+                col3.className = "col-md-3 col-xs-3";
+                var encImage = document.createElement('img');
+                encImage.src = canvas.toDataURL('image/png');
+                encImage.className = "img-fluid img-thumbnail";
+                col3.appendChild(encImage);
+                var encDesc = document.createElement("p");
+                encDesc.className = "text-center";
+                encDesc.innerText = "";
+                col3.appendChild(encDesc);
+                row.appendChild(col3);
+                
                 // Watermark
                 var coverImage = document.createElement('img');
                 coverImage.onload = function() {
@@ -150,21 +161,21 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
                     coverCtx.restore();
                     This.hideImage(ctx, coverCtx);
 
-                    var col3 = document.createElement("div");
-                    col3.className = "col-md-4 col-xs-4";
-                    var hidedImage = document.createElement('img');
-                    hidedImage.src = coverCanvas.toDataURL('image/png');
-                    hidedImage.className = "img-fluid img-thumbnail";
-                    col3.appendChild(hidedImage);
-                    row.appendChild(col3);
+                    var col4 = document.createElement("div");
+                    col4.className = "col-md-3 col-xs-3";
+                    var hiddenImage = document.createElement('img');
+                    hiddenImage.src = coverCanvas.toDataURL('image/png');
+                    hiddenImage.className = "img-fluid img-thumbnail";
+                    col4.appendChild(hiddenImage);
+                    var hidDesc = document.createElement("p");
+                    hidDesc.className = "text-center";
+                    hidDesc.innerText = img.width + " x " + img.height;
+                    col4.appendChild(hidDesc);
+                    row.appendChild(col4);
 
                     // Upload
                     var imageData = coverCanvas.toDataURL('image/png');
                     This.performUpload(imageData, completionCallback);
-
-                    var col3 = document.createElement("div");
-                    col3.className = "clearfix visible-xs-block";
-                    row.appendChild(col3);
                 }
                 coverImage.src = '/login/cover?rand=' + new Date().getTime();
             } else {

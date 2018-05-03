@@ -22,37 +22,11 @@
                         </script>
                     @endif
 
-                    <div class="form-group row">
-                        <label for="customFile" class="col-md-4 col-form-label text-md-right">Password Images</label>
-
-                        <div class="col-md-6">
-                            <div class="custom-file">
-                                <input id="images" name="images" type="file" class="image-upload custom-file-input{{ $errors->has('images') ? ' is-invalid' : '' }}" id="customFile" aria-describedby="fileHelp">
-                                <label class="custom-file-label" for="customFile">Choose file</label>
-                                <div class="progress" style="display: none">
-                                    <div id="upload-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
-                                </div>
-                                @if ($errors->has('images'))
-                                    <span class="invalid-feedback">
-                                        <strong>{{ $errors->first('images') }}</strong>
-                                    </span>
-                                @endif
-                                <span id="upload-error" class="invalid-feedback">
-                                    <strong></strong>
-                                </span>
-                            </div>
-                            <small id="fileHelp" class="form-text text-muted">Upload your password images one by one. Your images and their order will be your login credential.</small>
-
-                            <div id="uploaded">
-                            </div>
-                        </div>
-                    </div>
-
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
 
                         <div class="form-group row">
-                            <label for="name" class="col-md-4 col-form-label text-md-right">Name</label>
+                            <label for="name" class="col-md-4 col-form-label text-md-right">Username</label>
 
                             <div class="col-md-6">
                                 <input id="name" type="text" class="form-control{{ $errors->has('name') ? ' is-invalid' : '' }}" name="name" value="{{ old('name') }}" required autofocus>
@@ -65,6 +39,32 @@
                             </div>
                         </div>
 
+                        <div class="form-group row">
+                            <label for="customFile" class="col-md-4 col-form-label text-md-right">Password Images</label>
+    
+                            <div class="col-md-6">
+                                <div class="custom-file">
+                                    <input id="images" name="images" type="file" class="image-upload custom-file-input{{ $errors->has('images') ? ' is-invalid' : '' }}" id="customFile" aria-describedby="fileHelp">
+                                    <label class="custom-file-label" for="customFile">Choose file</label>
+                                    <div class="progress" style="display: none">
+                                        <div id="upload-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                                    </div>
+                                    @if ($errors->has('images'))
+                                        <span class="invalid-feedback">
+                                            <strong>{{ $errors->first('images') }}</strong>
+                                        </span>
+                                    @endif
+                                    <span id="upload-error" class="invalid-feedback">
+                                        <strong></strong>
+                                    </span>
+                                </div>
+                                <small id="fileHelp" class="form-text text-muted">Upload your password images one by one. Your images and their order will be your login credential.</small>
+    
+                                <div id="uploaded">
+                                </div>
+                            </div>
+                        </div>
+    
                         <div class="form-group row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button id="submit" type="submit" class="btn btn-primary">
