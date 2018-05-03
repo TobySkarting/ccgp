@@ -36,6 +36,11 @@
                             <small id="fileHelp" class="form-text text-muted">Upload your password images one by one. Your images and their order will be your login credential.</small>
 
                             <div id="uploaded">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">Original</div>
+                                    <div class="col-md-4 text-center">Cropped</div>
+                                    <div class="col-md-4 text-center">Hided</div>
+                                </div>
                             </div>
                         </div>
                     </div>

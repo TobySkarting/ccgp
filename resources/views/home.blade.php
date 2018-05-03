@@ -15,6 +15,23 @@
                     @endif
 
                     You are logged in!
+
+                    @if (session('pics'))
+                        <div id="uploaded">
+                            <div class="row">
+                                <div class="col-md-4 text-center">Original</div>
+                                <div class="col-md-4 text-center">Cropped</div>
+                                <div class="col-md-4 text-center">Hided</div>
+                            </div>
+                            @foreach (session('pics') as $pic)
+                                <div class="row">
+                                    <div class="col-md-4 text-center">$pic[0]</div>
+                                    <div class="col-md-4 text-center">$pic[1]</div>
+                                    <div class="col-md-4 text-center">$pic[2]</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -111,14 +111,16 @@ class UserController extends Controller
         $key = Storage::get("registered/$username/key");
 
         $i = 0;
+        $pics = array();
         foreach ($images as $imagePath) {
+            $pic = array();
             $correctImgPath = "registered/$username/$i.png";
             if (!Storage::exists($correctImgPath))
                 throw ValidationException::withMessages([
                     'images' => "Wrong password.",
                 ]);
             // Extract
-            $receivedImg = imagecreatefrompng("../storage/app/" . $imagePath);
+            $receivedImg = imagecreatefrompng(Storage::path($imagePath));
             $grayPixels = self::getGrayPixels($receivedImg);
 
             // Decrypt
@@ -127,7 +129,7 @@ class UserController extends Controller
                 throw ValidationException::withMessages([
                     'images' => "Wrong key.",
                 ]);
-            $correctImg = imagecreatefrompng("../storage/app/" . $correctImgPath);
+            $correctImg = imagecreatefrompng(Storage::path($correctImgPath));
             $decryptedImg = self::pixelsToImage($decrypted, imagesx($correctImg), imagesy($correctImg));
 
             // Compare            
@@ -159,9 +161,9 @@ class UserController extends Controller
 
     function getCover() 
     {
-        $files = File::glob("../storage/app/color/*.jpg");
+        $files = File::glob(Storage::path("color/*.png"));
         $count = count($files);
-        $img = imagecreatefromjpeg($files[rand() % $count]);
+        $img = imagecreatefrompng($files[rand() % $count]);
         header('Content-Type: image/png');
         imagepng($img);
         imagedestroy($img);

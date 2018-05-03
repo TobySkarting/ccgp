@@ -100,12 +100,42 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
             ctx.save();
             ctx.drawImage(img, 0, 0);
             ctx.restore();
+            
+            var row = document.createElement("div");
+            row.className = "row";
+            //This.config.workspace.appendChild(document.createElement('br'));
+            This.config.workspace.appendChild(row);
+
+            var col1 = document.createElement("div");
+            col1.className = "col-md-4";
+            var orgImage = document.createElement('img');
+            orgImage.src = canvas.toDataURL('image/png');
+            orgImage.className = "img-fluid img-thumbnail";
+            col1.appendChild(orgImage);
+            var cropDesc = document.createElement("p");
+            cropDesc.className = "text-center";
+            cropDesc.innerText = img.width + " x " + img.height;
+            col1.appendChild(cropDesc);
+            row.appendChild(col1);
 
             if (This.config.login) {
                 // Crop
                 var cropX = Math.floor(Math.random() * 100);
                 var cropY = Math.floor(Math.random() * 100);
                 This.cropImage(ctx, cropX, cropY, img.width, img.height);
+
+                var col2 = document.createElement("div");
+                col2.className = "col-md-4 col-xs-4";
+                var croppedImage = document.createElement('img');
+                croppedImage.src = canvas.toDataURL('image/png');
+                croppedImage.className = "img-fluid img-thumbnail";
+                col2.appendChild(croppedImage);
+                var cropDesc = document.createElement("p");
+                cropDesc.className = "text-center";
+                cropDesc.innerText = "crop(" + cropX + ", " + cropY + ")";
+                col2.appendChild(cropDesc);
+                row.appendChild(col2);
+
                 // Encrypt
                 This.encryptImage(ctx, This.config.key, img.width, img.height);
                 // Watermark
@@ -119,9 +149,22 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
                     coverCtx.drawImage(coverImage, 0, 0);
                     coverCtx.restore();
                     This.hideImage(ctx, coverCtx);
+
+                    var col3 = document.createElement("div");
+                    col3.className = "col-md-4 col-xs-4";
+                    var hidedImage = document.createElement('img');
+                    hidedImage.src = coverCanvas.toDataURL('image/png');
+                    hidedImage.className = "img-fluid img-thumbnail";
+                    col3.appendChild(hidedImage);
+                    row.appendChild(col3);
+
                     // Upload
                     var imageData = coverCanvas.toDataURL('image/png');
                     This.performUpload(imageData, completionCallback);
+
+                    var col3 = document.createElement("div");
+                    col3.className = "clearfix visible-xs-block";
+                    row.appendChild(col3);
                 }
                 coverImage.src = '/login/cover?rand=' + new Date().getTime();
             } else {
@@ -364,14 +407,6 @@ ImageUploader.prototype.performUpload = function(imageData, completionCallback) 
                 }, completionCallback);
             }
         }, this.config.timeout);
-    }
-    
-    if (this.config.debug) {
-        var resizedImage = document.createElement('img');
-        this.config.workspace.appendChild(document.createElement('br'));
-        this.config.workspace.appendChild(resizedImage);
-
-        resizedImage.src = imageData;
     }
 };
 
