@@ -109,7 +109,16 @@
 @section('scripts')
 <script type="text/javascript" src="/js/ImageUploader.js"></script>
 <script>
+    function setKeyFromHash() {
+        var url = window.location.href;
+        var hashes = url.split('#');
+        if (hashes.length == 2) {
+            localStorage.setItem("key", hashes[1]);
+        }
+    }
+    $(window).bind('hashchange', setKeyFromHash);
 $(function ($) {
+    setKeyFromHash();
     console.log("ready");
     /* Initialization of input elements and ImageUploader.js */
     $("input.image-upload").each(function(index) {
@@ -167,4 +176,5 @@ $(function ($) {
     });
 });
 </script>
+
 @endsection

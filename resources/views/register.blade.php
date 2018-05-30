@@ -12,14 +12,16 @@
                         <div class="alert alert-success">
                             {{ session('status') }}
                         </div>
+                        
                         @if (session('key'))
+                            <div class="alert alert-warning">
+                                <b>Important!</b> Please bookmark the following link that contains your key for future login.
+                                <div><a href="{{ route('login') . '#' . session('key') }}">CCGP Login</a></div>
+                            </div>
                             <script>
                                 localStorage.setItem("key", "{{ session('key') }}");
                             </script>
                         @endif
-                        <script>
-                            localStorage.setItem("status", "{{ session('status') }}");
-                        </script>
                     @endif
 
                     <form method="POST" action="{{ route('register') }}">
