@@ -131,7 +131,7 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
                 col2.appendChild(croppedImage);
                 var cropDesc = document.createElement("p");
                 cropDesc.className = "text-center";
-                cropDesc.innerText = "crop(" + cropX + ", " + cropY + ")";
+                cropDesc.innerText = "(x, y) = (" + cropX + ", " + cropY + ")";
                 col2.appendChild(cropDesc);
                 row.appendChild(col2);
 

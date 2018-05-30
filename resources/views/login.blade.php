@@ -55,8 +55,8 @@
                         </div>
 
                         @if (session('pics'))
-                            <div class="form-group">
-                                <div id="uploaded" class="offset-md-1 col-md-10">
+                            <div class="form-group row">
+                                <div id="result" class="offset-md-1 col-md-10">
                                         <div class="row">
                                             <div class="col-md-4 text-center">Received</div>
                                             <div class="col-md-4 text-center">Decrypted</div>
