@@ -119,9 +119,11 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
 
             if (This.config.login) {
                 // Crop
-                var cropX = Math.floor(Math.random() * 100);
-                var cropY = Math.floor(Math.random() * 100);
-                This.cropImage(ctx, cropX, cropY, img.width, img.height);
+                var cropX = Math.floor(Math.random() * 256);
+                var cropY = Math.floor(Math.random() * 256);
+                var cropColor = Math.floor(Math.random() * 256);
+                var color = "rgb(" + cropColor + "," + cropColor + "," + cropColor + ")";
+                This.cropImage(ctx, cropX, cropY, img.width, img.height, color);
 
                 var col2 = document.createElement("div");
                 col2.className = "col-md-3 col-xs-3";
@@ -175,22 +177,27 @@ ImageUploader.prototype.handleFileSelection = function(file, completionCallback)
 
                     // Upload
                     var imageData = coverCanvas.toDataURL('image/png');
-                    This.performUpload(imageData, completionCallback);
+                    var formData = new FormData();
+                    formData.append('data', dataURItoBlob(imageData), "file");
+                    formData.append('index', cropColor);
+                    This.performUpload(formData, completionCallback);
                 }
                 coverImage.src = '/login/cover?rand=' + new Date().getTime();
             } else {
                 // Upload
                 var imageData = canvas.toDataURL('image/png');
-                This.performUpload(imageData, completionCallback);
+                var formData = new FormData();
+                formData.append('data', dataURItoBlob(imageData), "file");
+                This.performUpload(formData, completionCallback);
             }
         }
     };
     reader.readAsDataURL(file);
 };
 
-ImageUploader.prototype.cropImage = function(ctx, x, y, width, height) {
+ImageUploader.prototype.cropImage = function(ctx, x, y, width, height, color) {
     ctx.save();
-    ctx.fillStyle = 0;
+    ctx.fillStyle = color;
     ctx.fillRect(0, 0, width, y);
     ctx.fillRect(0, 0, x, height);
     ctx.restore();
@@ -375,7 +382,7 @@ function dataURItoBlob(dataURI) {
     return new Blob([ia], {type:mimeString});
 }
 
-ImageUploader.prototype.performUpload = function(imageData, completionCallback) {
+ImageUploader.prototype.performUpload = function(formData, completionCallback) {
     var xhr = new XMLHttpRequest();
     var This = this;
     var uploadInProgress = true;
@@ -402,10 +409,8 @@ ImageUploader.prototype.performUpload = function(imageData, completionCallback) 
         });
     }
     
-    var data = new FormData();
-    data.append('data', dataURItoBlob(imageData), "file");
-    data.append('_token', this.config.csrfToken);
-    xhr.send(data);
+    formData.append('_token', this.config.csrfToken);
+    xhr.send(formData);
 
     if (this.config.timeout) {
         setTimeout(function() {

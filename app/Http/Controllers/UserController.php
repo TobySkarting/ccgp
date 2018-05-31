@@ -86,7 +86,8 @@ class UserController extends Controller
             ]);
         
         $filename = $request->file('data')->store("login");
-        $request->session()->push('login', $filename);
+        $index = $request->input('index');
+        $request->session()->push('login', compact('filename', 'index'));
         return $request->session()->all();
     }
 
@@ -105,7 +106,7 @@ class UserController extends Controller
         $images = $request->session()->get('login');
         if (is_null($images) || count($images) === 0)
             throw ValidationException::withMessages([
-                'images' => "You haven't uploaded any images.",
+                'images' => "You haven't selected any images.",
             ]);
 
         $key = Storage::get("registered/$username/key");
@@ -113,7 +114,7 @@ class UserController extends Controller
         $pics = array();
         $failed = false;
         $i = 0;
-        foreach ($images as $imagePath) {
+        foreach ($images as $image) {
             $pic = array();
             $correctImgPath = "registered/$username/$i.png";
             ++$i;
@@ -125,9 +126,9 @@ class UserController extends Controller
             $correctImg = imagecreatefrompng(Storage::path($correctImgPath));
                 
             // Extract
-            $receivedImg = imagecreatefrompng(Storage::path($imagePath));
-            $type = pathinfo(Storage::path($imagePath), PATHINFO_EXTENSION);
-            $image_data = Storage::get($imagePath);
+            $receivedImg = imagecreatefrompng(Storage::path($image["filename"]));
+            $type = pathinfo(Storage::path($image["filename"]), PATHINFO_EXTENSION);
+            $image_data = Storage::get($image["filename"]);
             $pic[0] = 'data:image/' . $type . ';base64,' . base64_encode($image_data);
 
             $grayPixels = self::getGrayPixels($receivedImg);
@@ -146,7 +147,7 @@ class UserController extends Controller
             $pic[1] = 'data:image/png;base64,' . base64_encode($image_data);
 
             // Compare            
-            if (!$this->compareImages($correctImg, $decryptedImg)) {
+            if (!$this->compareImages($correctImg, $decryptedImg, $image["index"])) {
                 $failed = true;
                 array_push($pics, $pic);
                 continue;
@@ -234,7 +235,7 @@ class UserController extends Controller
         return self::compareImages($imgA, $imgB);
     }
 
-    public static function compareImages($imgA, $imgB)
+    public static function compareImages($imgA, $imgB, $index = 0)
     {
         $widthA = imagesx($imgA);
         $heightA = imagesy($imgA);
@@ -250,7 +251,7 @@ class UserController extends Controller
             for ($x = 0; $x < $widthA; $x++) {
                 $rgbA = imagecolorat($imgA, $x, $y);
                 $rgbB = imagecolorat($imgB, $x, $y);
-                if ($rgbB == 0)
+                if ($rgbB == imagecolorallocate($imgB, $index, $index, $index))
                     continue;
                 if ($rgbA == $rgbB)
                     ++$matchedCount;
