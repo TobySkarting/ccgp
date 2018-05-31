@@ -15,8 +15,8 @@
                         
                         @if (session('key'))
                             <div class="alert alert-warning">
-                                <b>Important!</b> Please bookmark the following link that contains your key for future login.
-                                <div><a href="{{ route('login') . '#' . session('key') }}">CCGP Login</a></div>
+                                <b>Important!</b>
+                                Please bookmark this <a href="{{ route('login') . '#' . session('key') }}" class="alert-link">CCGP Login</a> link that contains your key for future login.
                             </div>
                             <script>
                                 localStorage.setItem("key", "{{ session('key') }}");
