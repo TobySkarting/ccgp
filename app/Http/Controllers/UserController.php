@@ -61,7 +61,6 @@ class UserController extends Controller
 
         $request->session()->forget('new');
         $key = Str::random();
-        Storage::put("registered/$username/key", $key);
         $request->session()->put('key', $key);
 
         User::create([
@@ -94,11 +93,11 @@ class UserController extends Controller
     function login(Request $request)
     {
         $request->validate([
-            'name' => 'required'
+            'name' => 'required|string'
         ]);
-
         $username = $request->input('name');
-        if (!Storage::exists("registered/$username"))
+        $user = User::where('name', $username)->first();
+        if (is_null($user) || !Storage::exists("registered/$username"))
             throw ValidationException::withMessages([
                 'name' => 'This is not a registered username.',
             ]);
@@ -109,7 +108,7 @@ class UserController extends Controller
                 'images' => "You haven't selected any images.",
             ]);
 
-        $key = Storage::get("registered/$username/key");
+        $key = $user->key;
 
         $pics = array();
         $failed = false;
@@ -174,7 +173,7 @@ class UserController extends Controller
         }
         $request->session()->forget('login');
 
-        Auth::login(User::where('name', $username)->first());
+        Auth::login($user);
 
         return redirect('/home')->with(['status' => 'Logged in!', 'pics' => $pics]);
     }
